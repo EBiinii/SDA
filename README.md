@@ -207,21 +207,11 @@ tsne_adaptation_run0_SDA_logits.png
 
 ---
 
-# Citation
-
-```bibtex
-@misc{sda_logits_isic2018,
-  title={Self-Distillation and Deep CORAL for Robust Skin Lesion Classification},
-  author={Your Name},
-  year={2026}
-}
-```
-
----
-
 # Acknowledgements
 
 - ISIC 2018 Challenge Dataset
 - PyTorch
-- TIMM
 - Deep CORAL
+  
+## License
+**MIT license**
