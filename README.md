@@ -12,7 +12,7 @@ The framework is evaluated on the ISIC2018 dataset under domain-shift conditions
 
 ---
 
-# Overview
+## Overview
 
 This project proposes a domain adaptation framework for skin lesion classification that improves robustness against image degradation and domain shifts.
 
@@ -27,9 +27,9 @@ using a multi-scale ResNet18 architecture.
 
 ---
 
-# Architecture
+## Architecture
 
-## Main Components
+### Main Components
 
 - ResNet18 backbone
 - Multi-exit classifiers (L1–L4)
@@ -39,9 +39,9 @@ using a multi-scale ResNet18 architecture.
 
 ---
 
-# Method
+## Method
 
-## 1. Logits Self-Distillation
+### 1. Logits Self-Distillation
 
 Shallow classifiers learn from the deepest classifier outputs.
 
@@ -57,7 +57,7 @@ Where:
 
 ---
 
-## 2. Deep CORAL
+### 2. Deep CORAL
 
 Feature distributions between source and target domains are aligned.
 
@@ -72,7 +72,7 @@ Where:
 
 ---
 
-## 3. Feature Self-Distillation
+### 3. Feature Self-Distillation
 
 Intermediate feature maps are aligned with the deepest feature representation.
 
@@ -82,13 +82,13 @@ Intermediate feature maps are aligned with the deepest feature representation.
 
 ---
 
-# Dataset
+## Dataset
 
-## Source Domain
+### Source Domain
 
 - ISIC2018
 
-## Target Domain
+### Target Domain
 
 - Turbidity-corrupted ISIC2018
 - Example:
@@ -96,7 +96,7 @@ Intermediate feature maps are aligned with the deepest feature representation.
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```bash
 .
@@ -112,9 +112,9 @@ Intermediate feature maps are aligned with the deepest feature representation.
 
 ---
 
-# Installation
+## Installation
 
-## Requirements
+### Requirements
 
 ```bash
 pip install torch torchvision timm scikit-learn pandas matplotlib tqdm
@@ -122,9 +122,9 @@ pip install torch torchvision timm scikit-learn pandas matplotlib tqdm
 
 ---
 
-# Training
+## Training
 
-## Source Only
+### Source Only
 
 ```bash
 python main.py \
@@ -132,7 +132,7 @@ python main.py \
     --target isic2018_turbidity_medium_center
 ```
 
-## Domain Adaptation
+### Domain Adaptation
 
 ```bash
 python main.py \
@@ -145,7 +145,7 @@ python main.py \
 
 ---
 
-# Important Arguments
+## Important Arguments
 
 | Argument | Description | Default |
 |---|---|---|
@@ -159,7 +159,7 @@ python main.py \
 
 ---
 
-# Evaluation Metrics
+## Evaluation Metrics
 
 The framework reports:
 
@@ -170,7 +170,7 @@ Classification reports are automatically saved as CSV files.
 
 ---
 
-# t-SNE Visualization
+## t-SNE Visualization
 
 The project provides feature visualization using t-SNE.
 
@@ -182,7 +182,7 @@ Generated outputs include:
 
 ---
 
-# Experimental Pipeline
+## Experimental Pipeline
 
 ```text
 Source Images ──┐
@@ -197,7 +197,7 @@ Target Images ──┘
 
 ---
 
-# Output Files
+## Output Files
 
 ```bash
 classification_report_adaptation_logits.csv
@@ -207,11 +207,11 @@ tsne_adaptation_run0_SDA_logits.png
 
 ---
 
-# Acknowledgements
+## Acknowledgements
 
 - ISIC 2018 Challenge Dataset
 - PyTorch
 - Deep CORAL
   
-## License
+### License
 **MIT license**
