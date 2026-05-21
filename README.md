@@ -163,12 +163,8 @@ python main.py \
 
 The framework reports:
 
-- Overall Accuracy (OA)
-- Macro F1-score
-- Weighted F1-score
-- Precision
-- Recall
-- Cohen’s Kappa
+- classification report (ACC, PRE, REC, F1)
+- tsne
 
 Classification reports are automatically saved as CSV files.
 
