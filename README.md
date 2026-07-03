@@ -53,7 +53,7 @@ Codella NCF, et al.
 
 Official website
 
-https://skinl2.github.io/
+https://www.it.pt/AutomaticPage?id=3459
 
 Please download both datasets from their official websites before running the code.
 
