@@ -19,11 +19,11 @@ import os
 from torch.optim.lr_scheduler import _LRScheduler
 from model_SDA import ResNetWithSD, MultiSDAdapter
 
-# --- 1. 환경 설정 ---
+# --- 1. Environment Setup ---
 os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-# --- 2. 하위 모듈 함수 ---
+# --- 2. Utility Functions ---
 
 def seed_everything(seed):
     random.seed(seed)
@@ -35,7 +35,9 @@ def seed_everything(seed):
 
 def distillation_loss(student_logits, teacher_logits, T):
     """
-    Logits SD (KL Divergence): 얕은 층이 깊은 층의 확률 분포(사고방식)를 복제함.
+    Logits Self-Distillation (KL Divergence):
+    The shallow layers learn to mimic the probability distribution
+    produced by the deepest layer.
     """
     p_s = F.log_softmax(student_logits / T, dim=1)
     p_t = F.softmax(teacher_logits / T, dim=1)
@@ -102,13 +104,13 @@ def plot_tsne(model, src_loader, tgt_loader, device, save_path):
     plt.savefig(save_path)
     plt.close()
 
-# --- 3. 학습 핵심 로직 ---
-
+# --- 3. Core Training Logic ---
 def train(model, adapter, optimizer, src_loader, tgt_loader, tracker, args, criterion, scheduler, epoch):
     model.train()
     adapter.train()
     
-    # 마지막 2 Epoch는 모든 보조 Loss를 0으로 설정하여 최종 수렴 유도
+    # Disable all auxiliary losses during the last two epochs
+    # to encourage stable final convergence.
     is_final_phase = epoch >= (args.epochs - 2)
     curr_alpha = args.lambda_sd_logits if not is_final_phase else 0.0
     curr_l_coral = args.lambda_coral if not is_final_phase else 0.0
@@ -129,7 +131,7 @@ def train(model, adapter, optimizer, src_loader, tgt_loader, tracker, args, crit
         optimizer.zero_grad()
         src_logits, src_feats = model(src_img)
         
-        # [STEP 1] Source Domain 학습 (GT + Logits SD)
+        # [STEP 1] Source Domain Training (GT + Logits SD)
         loss_cls = criterion(src_logits[3], src_lbl) # L4 Teacher
         teacher_logits_src = src_logits[3].detach()
         for i in range(3): # L1, L2, L3 Students
@@ -141,7 +143,8 @@ def train(model, adapter, optimizer, src_loader, tgt_loader, tracker, args, crit
             tgt_img, tgt_lbl = tgt_img.to(args.device), tgt_lbl.to(args.device)
             tgt_logits, tgt_feats = model(tgt_img)
             
-            # [STEP 2] Target Domain 학습 (GT + Logits SD)
+            
+            # [STEP 2] Target Domain Training (Ground Truth + Logits Self-Distillation)
             loss_cls += criterion(tgt_logits[3], tgt_lbl)
             teacher_logits_tgt = tgt_logits[3].detach()
             for i in range(3):
@@ -173,7 +176,7 @@ def train(model, adapter, optimizer, src_loader, tgt_loader, tracker, args, crit
     
     scheduler.step()
 
-# --- 4. 평가 함수 ---
+# --- 4. Evaluation Function ---
 
 def evaluate(model, loader, dataset_name, tracker, args):
     model.eval()
@@ -202,8 +205,7 @@ def evaluate(model, loader, dataset_name, tracker, args):
     print(f"\n[{dataset_name}] Ensemble OA: {results['Ensemble']:.4f}")
     return np.array(all_preds), np.array(all_labels), results
 
-# --- 5. 실험 실행 및 메인 함수 ---
-
+# --- 5. Experiment Execution and Main Function ---
 def run_experiment(args, run_id, mode):
     seed_everything(args.seed + run_id)
     src_train_loader = get_loader(args.source, args.batch_size, train=True)
@@ -224,8 +226,8 @@ def run_experiment(args, run_id, mode):
     
     preds, labels, accs = evaluate(model, tgt_eval_loader, f'{mode}_run{run_id}', tracker, args)
 # =====================================================
-    # 🔥 1. 샘플 단위 classification 결과 저장
-    # =====================================================
+# 🔥 1. Save Per-Sample Classification Results
+# =====================================================
     result_df = pd.DataFrame({
         "gt": labels,
         "pred": preds
@@ -235,14 +237,14 @@ def run_experiment(args, run_id, mode):
     # result_df.to_csv(detail_name, index=False)
     # print(f"[✔] Saved per-sample result -> {detail_name}")
 
-    # =====================================================
-    # 🔥 2. 추가 metric 계산 (논문용)
-    # =====================================================
+# =====================================================
+# 🔥 2. Compute Additional Evaluation Metrics
+# =====================================================
     report_dict = classification_report(labels, preds, output_dict=True)
 
     report_df = pd.DataFrame(report_dict).transpose()
 
-    # 소수점 정리 (논문용 깔끔화)
+    # Round the metrics
     report_df = report_df.round(4)
 
     report_name = f"classification_report_{mode}_logits.csv"
@@ -291,7 +293,7 @@ def main():
 
     df = pd.DataFrame(final_csv_rows)
     df.to_csv('sda_logits.csv', index=False)
-    print("\n[✔] 실험 완료. 결과가 'sda_logits.csv'에 저장되었습니다.")
+    print("\n[✔] Experiment completed. Results have been saved to 'sda_logits.csv'.")
 
 if __name__ == '__main__':
     main()
