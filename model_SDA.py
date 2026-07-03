@@ -6,10 +6,10 @@ from torchvision.models import resnet18, ResNet18_Weights
 class ResNetWithSD(nn.Module):
     def __init__(self, num_classes=7):
         super().__init__()
-        # Pre-trained ResNet18 로드
+        # Load Pre-trained ResNet18
         base_model = resnet18(weights=ResNet18_Weights.DEFAULT)
         
-        # 특성 추출부 분리
+        # Separate the feature extraction backbone
         self.conv1 = base_model.conv1
         self.bn1 = base_model.bn1
         self.relu = base_model.relu
@@ -20,7 +20,7 @@ class ResNetWithSD(nn.Module):
         self.layer3 = base_model.layer3
         self.layer4 = base_model.layer4
         
-        # 각 레이어별 보조 분류기 (Linear Layer)
+        # Auxiliary classifier for each layer (Linear layer)
         self.fc1 = nn.Linear(64, num_classes)
         self.fc2 = nn.Linear(128, num_classes)
         self.fc3 = nn.Linear(256, num_classes)
@@ -34,7 +34,7 @@ class ResNetWithSD(nn.Module):
         l4 = self.layer4(l3)
         
         def get_logits(feat, fc):
-            # GAP(Global Average Pooling) 적용 후 FC 통과
+            # Apply Global Average Pooling (GAP) followed by a fully connected (FC) layer
             out = F.adaptive_avg_pool2d(feat, (1, 1))
             return fc(torch.flatten(out, 1))
 
@@ -49,8 +49,9 @@ class ResNetWithSD(nn.Module):
 
 class MultiSDAdapter(nn.Module):
     def __init__(self, channels=[64, 128, 256], teacher_dim=512):
-        super().__init__()
-        # 학생 레이어들의 채널을 스승(L4)의 차원인 512로 맞춤
+        super().__init__()        
+        # Align the channel dimensions of the student layers
+        # to match the teacher (L4) feature dimension (512)
         self.adapters = nn.ModuleList([
             nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)), 
