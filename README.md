@@ -1,217 +1,233 @@
-# SDA-Logits: Self-Distillation + Deep CORAL for Skin Lesion Classification
+# SDA: Self-Distillation Framework for Domain Adaptation in Skin Lesion Classification
 
-PyTorch implementation of a robust skin lesion classification framework using:
+This repository provides the official PyTorch implementation of the proposed **Self-Distillation Framework for Domain Adaptation in Skin Lesion Classification**.
 
-- Self-Distillation (SD)
-- Deep CORAL
-- Feature Distillation
-- Multi-exit ResNet18
-- Domain Adaptation
-
-The framework is evaluated on the ISIC2018 dataset under domain-shift conditions using turbidity-corrupted images.
+The repository includes the network architecture, dataset loader, domain adaptation modules, evaluation pipeline, and utility functions used in our experiments. The main executable script is `test_SDA_logits.py`, which performs the complete evaluation procedure using a trained SDA model.
 
 ---
 
-## Overview
+# Overview
 
-This project proposes a domain adaptation framework for skin lesion classification that improves robustness against image degradation and domain shifts.
+Deep learning models for skin lesion classification often suffer performance degradation when applied to images collected under different imaging conditions or from different domains. To improve robustness, we propose a self-distillation framework for domain adaptation.
 
-The model combines:
+The proposed framework employs a ResNet-18 backbone with auxiliary classifiers attached to intermediate layers. During training, the deepest classifier transfers knowledge to the intermediate classifiers through self-distillation. Domain discrepancy between the source and target datasets is further reduced through feature alignment.
 
-1. Classification Supervision
-2. Logits-based Self-Distillation
-3. Feature-level Distillation
-4. Deep CORAL Alignment
-
-using a multi-scale ResNet18 architecture.
+This repository contains the implementation used in our study for model evaluation and reproducibility.
 
 ---
 
-## Architecture
-
-### Main Components
-
-- ResNet18 backbone
-- Multi-exit classifiers (L1–L4)
-- Teacher-Student Self-Distillation
-- Feature Adapter Module
-- Deep CORAL Domain Alignment
-
----
-
-## Method
-
-### 1. Logits Self-Distillation
-
-Shallow classifiers learn from the deepest classifier outputs.
-
-\[
-\mathcal{L}_{SD}=KL(\sigma(z_s/T), \sigma(z_t/T)) \cdot T^2
-\]
-
-Where:
-
-- \(z_s\): student logits
-- \(z_t\): teacher logits
-- \(T\): temperature scaling
-
----
-
-### 2. Deep CORAL
-
-Feature distributions between source and target domains are aligned.
-
-\[
-\mathcal{L}_{CORAL}=\frac{1}{4d^2}\|C_s-C_t\|_F^2
-\]
-
-Where:
-
-- \(C_s\): source covariance
-- \(C_t\): target covariance
-
----
-
-### 3. Feature Self-Distillation
-
-Intermediate feature maps are aligned with the deepest feature representation.
-
-\[
-\mathcal{L}_{feat}=\sum_i \|f_i-f_t\|_2^2
-\]
-
----
-
-## Dataset
-
-### Source Domain
-
-- ISIC2018
-
-### Target Domain
-
-- Turbidity-corrupted ISIC2018
-- Example:
-  - `isic2018_turbidity_medium_center`
-
----
-
-## Project Structure
-
-```bash
-.
-├── main.py
-├── model_SDA.py
-├── coral.py
-├── data_loader.py
-├── utils.py
-├── classification_report_*.csv
-├── sda_logits.csv
-└── tsne_*.png
-```
-
----
-
-## Installation
-
-### Requirements
-
-```bash
-pip install torch torchvision timm scikit-learn pandas matplotlib tqdm
-```
-
----
-
-## Training
-
-### Source Only
-
-```bash
-python main.py \
-    --source isic2018 \
-    --target isic2018_turbidity_medium_center
-```
-
-### Domain Adaptation
-
-```bash
-python main.py \
-    --source isic2018 \
-    --target isic2018_turbidity_medium_center \
-    --lambda_coral 0.1 \
-    --lambda_sd_logits 0.4 \
-    --lambda_sd_feat 0.1
-```
-
----
-
-## Important Arguments
-
-| Argument | Description | Default |
-|---|---|---|
-| `--epochs` | Number of epochs | 10 |
-| `--batch_size` | Batch size | 8 |
-| `--lr` | Learning rate | 1e-3 |
-| `--lambda_coral` | CORAL loss weight | 0.1 |
-| `--lambda_sd_logits` | Logits SD weight | 0.4 |
-| `--lambda_sd_feat` | Feature SD weight | 0.1 |
-| `--temperature` | Distillation temperature | 1.0 |
-
----
-
-## Evaluation Metrics
-
-The framework reports:
-
-- classification report (ACC, PRE, REC, F1)
-- tsne
-
-Classification reports are automatically saved as CSV files.
-
----
-
-## t-SNE Visualization
-
-The project provides feature visualization using t-SNE.
-
-Generated outputs include:
-
-- Source domain features
-- Target domain features
-- Adaptation quality comparison
-
----
-
-## Experimental Pipeline
+# Repository Structure
 
 ```text
-Source Images ──┐
-                ├── ResNet18 + Multi-Exit Heads
-Target Images ──┘
-                        │
-                        ├── Classification Loss
-                        ├── Logits Self-Distillation
-                        ├── Feature Distillation
-                        └── Deep CORAL Alignment
+SDA/
+├── LICENSE
+├── README.md
+├── coral.py              # Feature alignment loss
+├── data_loader.py        # Dataset loading and preprocessing
+├── model_SDA.py          # SDA network architecture
+├── test_SDA_logits.py    # Main evaluation script
+└── utils.py              # Utility functions
 ```
 
 ---
 
-## Output Files
+# Dataset Information
+
+The experiments were conducted using the following publicly available skin lesion datasets.
+
+---
+**ISIC 2018: Skin Lesion Analysis Towards Melanoma Detection**
+
+Official website
+
+https://challenge.isic-archive.com/data/
+
+Reference
+
+Codella NCF, et al.
+*Skin Lesion Analysis Toward Melanoma Detection: A Challenge at the 2018 ISIC Workshop.*
+
+---
+
+**SKINL2 Dataset**
+
+Official website
+
+https://skinl2.github.io/
+
+Please download both datasets from their official websites before running the code.
+
+---
+
+# Data Preprocessing
+
+Image preprocessing is implemented in `data_loader.py`.
+
+The preprocessing pipeline includes:
+
+- Image resizing
+- Image normalization
+- Conversion to PyTorch tensors
+- Dataset loading for source and target domains
+
+Please modify the dataset paths according to your local environment before running the code.
+
+---
+
+# Methodology
+
+The proposed SDA framework consists of the following components.
+
+- ResNet-18 backbone
+- Multi-level feature extraction
+- Auxiliary classifiers
+- Self-distillation between intermediate and final classifiers
+- Feature alignment module for domain adaptation
+- Final classification layer
+
+During training, the deepest classifier serves as the teacher and transfers knowledge to shallower classifiers through logit-based self-distillation. Feature alignment is employed to reduce the discrepancy between the source and target domains.
+
+---
+
+# Code Information
+
+## test_SDA_logits.py
+
+This is the main executable script of the repository.
+
+The script performs the following tasks:
+
+- Loads the source and target datasets
+- Constructs the SDA model
+- Loads a trained model checkpoint
+- Performs model evaluation
+- Reports classification performance
+
+Running this script reproduces the evaluation pipeline described in the manuscript.
+
+---
+
+## model_SDA.py
+
+Defines the SDA network architecture, including:
+
+- ResNet-18 backbone
+- Intermediate feature extraction
+- Auxiliary classifiers
+- Feature projection modules
+- Self-distillation modules
+
+---
+
+## data_loader.py
+
+Loads the ISIC 2018 and SKINL2 datasets and performs image preprocessing.
+
+---
+
+## coral.py
+
+Implements the feature alignment loss used for domain adaptation.
+
+---
+
+## utils.py
+
+Provides utility functions for evaluation and experiment management.
+
+---
+
+# Requirements
+
+The implementation was developed using **Python 3.10** and **PyTorch**.
+
+All required Python packages are listed in the `requirements.txt` file.
+
+Install the dependencies using:
 
 ```bash
-classification_report_adaptation_logits.csv
-sda_logits.csv
-tsne_adaptation_run0_SDA_logits.png
+pip install -r requirements.txt
 ```
 
 ---
 
-## Acknowledgements
+# Usage
+
+## Step 1. Download the datasets
+
+Download the ISIC 2018 and SKINL2 datasets from their official websites.
+
+---
+
+## Step 2. Configure the dataset paths
+
+Modify the dataset paths and model checkpoint path in `test_SDA_logits.py` according to your local environment.
+
+---
+
+## Step 3. Run the evaluation
+
+```bash
+python test_SDA_logits.py
+```
+
+The script automatically:
+
+- loads the datasets,
+- initializes the SDA model,
+- loads the trained model checkpoint,
+- performs evaluation,
+- reports the classification results.
+
+---
+
+# Reproducibility
+
+To reproduce the experimental results reported in the manuscript:
+
+1. Download the ISIC 2018 and SKINL2 datasets.
+2. Configure the dataset paths.
+3. Place the trained model checkpoint in the specified directory.
+4. Execute
+
+```bash
+python test_SDA_logits.py
+```
+
+The implementation follows the evaluation procedure described in the manuscript.
+
+---
+
+# Citation
+
+If you use this repository in your research, please cite:
+
+```bibtex
+@article{YOUR_PAPER,
+  title={Self-Distillation Framework for Domain Adaptation in Skin Lesion Classification},
+  author={Author(s)},
+  journal={Journal Name},
+  year={2026}
+}
+```
+
+Please also cite the original ISIC 2018 and SKINL2 dataset publications.
+
+---
+
+# License
+
+This project is distributed under the MIT License.
+
+Please refer to the `LICENSE` file for details.
+
+---
+
+# Acknowledgements
+
+We gratefully acknowledge the creators of the following publicly available datasets:
 
 - ISIC 2018 Challenge Dataset
-- PyTorch
-- Deep CORAL
-  
-### License
-**MIT license**
+- SKINL2 Dataset
+
+Their contributions have greatly supported research on automated skin lesion analysis.
